@@ -161,15 +161,9 @@ pkg install termux-api
 
 You also need the **Termux:API Android add-on** installed on your device.
 
-Official repository:
+Official Termux:API repository:
 
-[Termux:API on GitHub](https://github.com/termux/termux-api)
-
-Example:
-
-```bash
-termux-battery-status
-```
+[Download and view Termux:API](https://github.com/termux/termux-api)
 
 ## Requirements
 
@@ -178,6 +172,12 @@ termux-battery-status
 - Python 3
 - Internet connection during installation
 - Termux:API add-on for API features
+
+### Download Termux
+
+Install Termux from the official GitHub repository:
+
+[Download Termux](https://github.com/termux/termux-app)
 
 ## Troubleshooting
 
