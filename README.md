@@ -1,14 +1,21 @@
-# Termux MCP Server
-
 <div align="center">
 
-### Give AI clients access to your Android terminal.
+# Termux MCP Server
 
-A lightweight, configurable Model Context Protocol server for Termux, built with Python and `aiohttp`.
+### Give AI assistants powerful, controlled access to your Android device through Termux.
 
-[![Platform](https://img.shields.io/badge/platform-Android-green?style=for-the-badge&logo=android)](https://termux.dev/)
-[![Python](https://img.shields.io/badge/built%20with-Python-blue?style=for-the-badge&logo=python)](https://www.python.org/)
-[![License](https://img.shields.io/github/license/alongbarbasumatary/Termux-MCP-Server?style=for-the-badge)](LICENSE)
+A lightweight, extensible **Model Context Protocol (MCP) server** for Termux, built with Python and `aiohttp`.
+
+<p>
+  <a href="https://github.com/alongbarbasumatary/Termux-MCP-Server">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github" alt="GitHub Repository">
+  </a>
+  <a href="https://github.com/alongbarbasumatary/Termux-MCP-Server/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/alongbarbasumatary/Termux-MCP-Server?style=for-the-badge" alt="License">
+  </a>
+  <img src="https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/Platform-Termux-000000?style=for-the-badge&logo=android" alt="Termux">
+</p>
 
 </div>
 
@@ -16,33 +23,97 @@ A lightweight, configurable Model Context Protocol server for Termux, built with
 
 ## Overview
 
-Termux MCP Server connects MCP-compatible AI applications to your Termux environment.
+**Termux MCP Server** connects MCP-compatible AI clients to a Termux environment. It allows an AI assistant or automation client to interact with your Android device through a simple HTTP or Server-Sent Events (SSE) interface.
 
-It provides tools for executing shell commands, managing files, accessing environment information, and running Termux API commands.
+Use it to execute shell commands, access Termux APIs, inspect files, read and write data, retrieve device location, and view environment information.
 
-> Local access is enabled by default. Remote access must be explicitly enabled.
+> **Security note:** This server can expose powerful device capabilities. Run it locally unless remote access is explicitly required, and never expose an unauthenticated instance to the public internet.
 
 ## Features
 
-- Shell command execution
-- File listing, reading, and writing
-- Termux API command support
-- HTTP and SSE transport
-- Configurable host, port, root directory, and output limits
-- Local-first security defaults
-- One-command installation
+- **HTTP MCP transport** for modern MCP clients
+- **SSE transport** for clients that require Server-Sent Events
+- **Shell execution** through Termux
+- **Termux:API integration**
+- **Device location access**
+- **File management** within a configurable root directory
+- **Environment inspection**
+- **Configurable host, port, output limits, and permissions**
+- **Local-first defaults**
+- **Simple command-line startup**
+
+## Available MCP Tools
+
+| Tool | Description |
+|---|---|
+| `shell` | Execute shell commands in Termux |
+| `termux_api` | Run supported Termux:API commands |
+| `location` | Retrieve the Android device's current location using Termux:API |
+| `list_files` | List files and directories |
+| `read_file` | Read a file from the configured root |
+| `write_file` | Create or overwrite a file in the configured root |
+| `environment` | Inspect selected environment and runtime information |
+
+### Location Tool
+
+The `location` tool uses Termux:API to request the device's location.
+
+Before using it, install the Termux:API companion application and grant the required Android location permissions.
+
+The underlying Termux command is:
+
+```bash
+termux-location
+```
+
+Depending on the Android version and device settings, location availability may require:
+
+- Location services to be enabled
+- Termux:API to be installed
+- Location permission to be granted
+- A working GPS, Wi-Fi, or mobile network connection
+
+## Requirements
+
+- Android device
+- [Termux](https://github.com/termux/termux-app)
+- Python 3.9 or newer
+- Optional: [Termux:API](https://github.com/termux/termux-api) for device APIs and location access
+
+### Install Termux
+
+Install Termux from the official project repository:
+
+**[Download Termux](https://github.com/termux/termux-app)**
+
+### Install Termux:API
+
+Install the Termux:API companion application if you want to use device features such as location, battery information, sensors, and other Android APIs:
+
+**[Download and view Termux:API](https://github.com/termux/termux-api)**
+
+After installing Termux:API, also install the Termux:API package inside Termux:
+
+```bash
+pkg update
+pkg install termux-api
+```
 
 ## Installation
 
 ### Automatic Installation
 
-Run this command inside Termux:
+Run this command directly in Termux:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/alongbarbasumatary/Termux-MCP-Server/main/scripts/install.sh | bash
 ```
 
+The installer sets up the required files and makes the `mcp-server` command available.
+
 ### Manual Installation
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/alongbarbasumatary/Termux-MCP-Server.git
@@ -52,26 +123,26 @@ cd Termux-MCP-Server
 Install dependencies:
 
 ```bash
-pkg update -y
-pkg install -y python curl
-python -m pip install --upgrade aiohttp
+pip install -r requirements.txt
 ```
 
-Start manually:
+If the project does not include a requirements file in your checkout, install the runtime dependency manually:
 
 ```bash
-python server.py http
+pip install aiohttp
 ```
 
-Or:
+Make the launcher executable if required:
 
 ```bash
-python server.py sse
+chmod +x mcp-server
 ```
 
 ## Usage
 
-### HTTP Mode
+Start the server using one of the supported transports.
+
+### HTTP
 
 ```bash
 mcp-server http
@@ -83,7 +154,7 @@ Endpoint:
 http://127.0.0.1:3000/mcp
 ```
 
-### SSE Mode
+### SSE
 
 ```bash
 mcp-server sse
@@ -95,156 +166,153 @@ Endpoint:
 http://127.0.0.1:3000/sse
 ```
 
-Stop the server with `CTRL + C`.
+### Custom Port
+
+Set a different port with `MCP_PORT`:
+
+```bash
+MCP_PORT=8080 mcp-server http
+```
 
 ## Configuration
 
-### Change Port
+The server is designed to be local-only by default.
+
+| Variable | Default | Description |
+|---|---|---|
+| `MCP_HOST` | `127.0.0.1` | Network interface to bind to |
+| `MCP_PORT` | `3000` | Server port |
+| `MCP_ROOT` | Current project directory | Root directory for file operations |
+| `MCP_MAX_OUTPUT` | Application default | Maximum shell output size |
+| `MCP_ALLOW_LONG_RUNNING` | Application default | Allow long-running commands |
+| `MCP_ALLOW_REMOTE` | `0` | Allow non-local binding when enabled |
+
+### Local Access
+
+The recommended configuration is local-only:
 
 ```bash
-MCP_PORT=3001 mcp-server http
+mcp-server http
 ```
 
-### Enable Remote Access
+### Remote Access
 
-Remote access is disabled by default.
+Remote access is optional and should only be enabled when you understand the network and security implications:
 
 ```bash
 MCP_HOST=0.0.0.0 MCP_ALLOW_REMOTE=1 mcp-server http
 ```
 
-Connect from another device using:
+**Important:** Do not expose the server directly to the public internet without adding authentication, encryption, firewall restrictions, and other appropriate security controls.
+
+## Connecting an MCP Client
+
+Configure your MCP-compatible client to use the appropriate endpoint.
+
+### HTTP Transport
 
 ```text
-http://ANDROID_DEVICE_IP:3000/mcp
+http://127.0.0.1:3000/mcp
 ```
 
-> **Security warning:** Enable remote access only on trusted networks. This server can execute commands and access files.
+### SSE Transport
 
-### Change MCP Root
-
-```bash
-termux-setup-storage
-MCP_ROOT=/sdcard mcp-server http
+```text
+http://127.0.0.1:3000/sse
 ```
 
-### Configure Output Limit
+The exact configuration format depends on the MCP client you use.
 
-```bash
-MCP_MAX_OUTPUT=20000 mcp-server http
-```
+## Example Capabilities
 
-### Enable Long-Running Commands
+Once connected, an MCP client may be able to:
 
-```bash
-MCP_ALLOW_LONG_RUNNING=1 mcp-server http
-```
-
-## Available Tools
-
-| Tool | Description |
-|---|---|
-| `shell` | Execute shell commands |
-| `termux_api` | Run Termux API commands |
-| `list_files` | List files and directories |
-| `read_file` | Read file contents |
-| `write_file` | Write content to files |
-| `environment` | Retrieve environment information |
-
-## Termux API Support
-
-Install the Termux API package:
-
-```bash
-pkg install termux-api
-```
-
-You also need the **Termux:API Android add-on** installed on your device.
-
-Official Termux:API repository:
-
-[Download and view Termux:API](https://github.com/termux/termux-api)
-
-## Requirements
-
-- Android device
-- Termux
-- Python 3
-- Internet connection during installation
-- Termux:API add-on for API features
-
-### Download Termux
-
-Install Termux from the official GitHub repository:
-
-[Download Termux](https://github.com/termux/termux-app)
+- Run Termux shell commands
+- Call Termux:API commands
+- Retrieve device location
+- Browse files inside the configured root
+- Read and write files
+- Inspect the Termux environment
+- Automate Android workflows through supported commands
 
 ## Troubleshooting
 
-### Port Already in Use
+### `mcp-server: command not found`
+
+Restart Termux or ensure the installation directory is included in your `PATH`.
+
+### Location does not work
+
+Check the following:
+
+1. Install the Termux:API application.
+2. Install the Termux package:
+
+   ```bash
+   pkg install termux-api
+   ```
+
+3. Enable Android Location Services.
+4. Grant location permission to Termux and Termux:API.
+5. Test directly:
+
+   ```bash
+   termux-location
+   ```
+
+### Port already in use
+
+Use another port:
 
 ```bash
-ss -ltnp | grep ':3000'
+MCP_PORT=8080 mcp-server http
 ```
 
-Or use another port:
+### Termux API command fails
 
-```bash
-MCP_PORT=3001 mcp-server http
-```
+Make sure the corresponding Termux:API companion application is installed and that the requested Android permission has been granted.
 
-### Check Running Processes
+## Security Recommendations
 
-```bash
-ps -ef | grep '[s]erver.py'
-```
-
-### Stop an Existing Instance
-
-```bash
-pkill -f '/.termux-mcp/server.py'
-```
-
-## Uninstallation
-
-```bash
-rm -rf "$HOME/.termux-mcp"
-rm -f "$PREFIX/bin/mcp-server"
-```
+- Keep the server bound to `127.0.0.1` whenever possible.
+- Do not share the server endpoint publicly without authentication.
+- Avoid running untrusted commands.
+- Use a restricted `MCP_ROOT` for file access.
+- Review commands before allowing an AI client to execute them.
+- Do not store secrets in files accessible to the server.
+- Use firewall or VPN controls for remote access.
 
 ## Project Structure
 
 ```text
 Termux-MCP-Server/
-├── server.py
 ├── scripts/
 │   └── install.sh
-├── README.md
-└── LICENSE
+├── server.py
+├── requirements.txt
+└── README.md
 ```
 
-## Security
+## Contributing
 
-- Keep the server bound to `127.0.0.1` when possible
-- Enable remote access only when necessary
-- Use trusted networks
-- Avoid exposing port `3000` publicly
-- Do not connect untrusted AI clients
-- Review commands before allowing sensitive operations
-- Avoid using the server with confidential files
+Contributions, bug reports, feature requests, and improvements are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Test the server in Termux.
+5. Open a pull request.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
-## Author
-
-Created and maintained by [alongbarbasumatary](https://github.com/alongbarbasumatary).
+This project is distributed under the license included in the repository.
 
 ---
 
 <div align="center">
 
-If this project is useful, consider giving it a ⭐ on GitHub.
+Made for Termux, Android automation, and MCP-compatible AI clients.
+
+**[View the repository](https://github.com/alongbarbasumatary/Termux-MCP-Server)**
 
 </div>
