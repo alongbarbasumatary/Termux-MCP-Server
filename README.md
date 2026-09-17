@@ -1,279 +1,165 @@
+<div align="center">
 Termux MCP Server
-
-A lightweight Model Context Protocol (MCP) server for Android using Termux.
-
-This server allows MCP-compatible AI clients to interact with your Termux environment through tools such as shell commands, file management, Termux API, and environment information.
-
+Give AI clients access to your Android terminal.
+A lightweight, configurable Model Context Protocol server for Termux, built with Python and aiohttp.
+<p>
+  <a href="https://github.com/alongbarbasumatary/Termux-MCP-Server">
+    <img src="https://img.shields.io/github/stars/alongbarbasumatary/Termux-MCP-Server?style=for-the-badge&logo=github" alt="GitHub Stars">
+  </a>
+  <a href="https://github.com/alongbarbasumatary/Termux-MCP-Server">
+    <img src="https://img.shields.io/github/license/alongbarbasumatary/Termux-MCP-Server?style=for-the-badge" alt="License">
+  </a>
+  <img src="https://img.shields.io/badge/platform-Android-green?style=for-the-badge&logo=android" alt="Platform">
+  <img src="https://img.shields.io/badge/built%20with-Python-blue?style=for-the-badge&logo=python" alt="Python">
+</p>
+</div>
+---
+Overview
+Termux MCP Server connects MCP-compatible AI applications to your Termux environment.
+It allows an AI client to interact with your Android device through controlled tools for executing commands, managing files, accessing environment information, and running Termux API commands.
+> Designed for local use, with remote access available when explicitly enabled.
 Features
-
-- Run shell commands in Termux
-- Execute Termux API commands
-- List files and directories
-- Read files
-- Write files
-- View environment information
-- HTTP transport support
-- Server-Sent Events (SSE) transport support
-- Configurable host and port
-- Configurable MCP root directory
-- Local-only access by default
-- Optional remote access
-- Optional long-running commands
-- Simple installation using one command
-
-Requirements
-
-- Android device
-- "Termux" (https://termux.dev/)
-- Internet connection
-- Python 3
-- "curl"
-
-«Recommended: Install Termux from "F-Droid" (https://f-droid.org/packages/com.termux/) or the official Termux source.»
-
+Feature	Description
+⚡ Shell Execution	Run commands directly inside Termux
+📁 File Management	List, read, and write files
+📱 Termux API	Execute supported Termux API commands
+🌐 HTTP Transport	Connect through an HTTP MCP endpoint
+📡 SSE Transport	Connect through Server-Sent Events
+⚙️ Configuration	Customize host, port, root directory, and limits
+🔒 Local-First	Local access is enabled by default
+🚀 Simple Setup	Install and start with minimal commands
 Installation
-
-Open Termux and run:
-
+Run the following command inside Termux:
 curl -fsSL https://raw.githubusercontent.com/alongbarbasumatary/Termux-MCP-Server/main/install.sh | bash
 
-The installer will:
-
-1. Install required packages
-2. Install Python
-3. Install "aiohttp"
-4. Download the MCP server
-5. Create the "mcp-server" command
-
-Usage
-
-Start HTTP Server
-
+The installer automatically installs the required dependencies and creates the mcp-server command.
+Quick Start
+Start HTTP Mode
 mcp-server http
 
-Default HTTP endpoint:
-
+MCP endpoint:
 http://127.0.0.1:3000/mcp
 
-Start SSE Server
-
+Start SSE Mode
 mcp-server sse
 
-Default SSE endpoint:
-
+SSE endpoint:
 http://127.0.0.1:3000/sse
 
+Stop the Server
+Press:
+CTRL + C
+
 Configuration
-
-You can configure the server using environment variables.
-
-Change Port
-
+The server can be configured using environment variables.
+Custom Port
 MCP_PORT=3001 mcp-server http
 
-The server will then run at:
-
-http://127.0.0.1:3001
-
-Change Host
-
-By default, the server only accepts local connections:
-
-127.0.0.1
-
-To bind to another host:
-
-MCP_HOST=0.0.0.0 mcp-server http
-
-«Binding to "0.0.0.0" alone does not enable remote access. Remote access must also be explicitly enabled.»
+Custom Host
+MCP_HOST=127.0.0.1 mcp-server http
 
 Enable Remote Access
-
 Remote access is disabled by default.
-
 To enable it:
+MCP_HOST=0.0.0.0 MCP_ALLOW_REMOTE=1 mcp-server http
 
-MCP_ALLOW_REMOTE=1 mcp-server http
+The server can then be accessed using your Android device's local IP address:
+http://ANDROID_DEVICE_IP:3000/mcp
 
-Example:
-
-MCP_HOST=0.0.0.0 MCP_ALLOW_REMOTE=1 MCP_PORT=3000 mcp-server http
-
-«Security warning: Remote access may expose your Termux environment to other devices. Only enable it on trusted networks and use additional authentication or network restrictions when exposing the server outside your device.»
-
+> **Security notice:** Remote access allows other devices on the network to interact with the server. Only enable it on trusted networks. Do not expose the server directly to the public internet without proper security controls.
 Change MCP Root Directory
-
-By default, the MCP root is the Termux home directory:
-
-/data/data/com.termux/files/home
-
-To use another directory:
-
-MCP_ROOT=/sdcard mcp-server http
-
-You may need to grant Termux storage access first:
-
+By default, the server uses the Termux home directory.
+To use shared Android storage:
 termux-setup-storage
 
-Configure Maximum Output
+Then start the server with:
+MCP_ROOT=/sdcard mcp-server http
 
-The default maximum command output is "100000" characters.
-
+Configure Output Limit
 MCP_MAX_OUTPUT=20000 mcp-server http
 
 Enable Long-Running Commands
-
 Long-running commands are disabled by default.
-
 To enable them:
-
 MCP_ALLOW_LONG_RUNNING=1 mcp-server http
 
-Available MCP Tools
+Available Tools
+The server exposes the following MCP tools:
+Tool	Description
+shell	Execute shell commands
+termux_api	Run Termux API commands
+list_files	List files and directories
+read_file	Read file contents
+write_file	Write content to files
+environment	Retrieve environment information
+Termux API Support
+To use Termux API functionality, install the Termux API package:
+pkg install termux-api
 
-The server provides the following tools:
-
-Tool| Description
-"shell"| Execute shell commands in Termux
-"termux_api"| Execute Termux API commands
-"list_files"| List files and directories
-"read_file"| Read file contents
-"write_file"| Write content to a file
-"environment"| Get environment information
-
-Example Commands
-
-List Files
-
-ls -la
-
-Check Current Directory
-
-pwd
-
-Check Python Version
-
-python --version
-
-Check Termux Packages
-
-pkg list-installed
-
-Use Termux API
-
-If Termux:API is installed:
-
+You also need the Termux:API Android add-on installed on your device.
+For example:
 termux-battery-status
 
-You must have the Termux:API add-on installed to use Termux API commands.
-
-Connect to an MCP Client
-
-Use the appropriate endpoint in your MCP-compatible client.
-
-HTTP
-
-http://127.0.0.1:3000/mcp
-
-SSE
-
-http://127.0.0.1:3000/sse
-
-If the MCP client runs on another device, configure the server for remote access and use your Android device's local IP address.
-
-Example:
-
-http://ANDROID_DEVICE_IP:3000/mcp
-
+Requirements
+Android device
+Termux
+Python 3
+Internet connection during installation
+Termux:API add-on for API-related features
+For the best compatibility, use a current Termux version from a trusted source such as F-Droid.
 Troubleshooting
-
 Port Already in Use
-
 If you see:
-
 OSError: [Errno 98] address already in use
 
-Another process is already using port "3000".
-
+Another process is already using port 3000.
 Check the port:
-
 ss -ltnp | grep ':3000'
 
-Check running server processes:
+Or start the server on another port:
+MCP_PORT=3001 mcp-server http
 
+Check Running Server Processes
 ps -ef | grep '[s]erver.py'
 
-Stop the installed MCP server process:
-
+Stop an Existing Installed Instance
 pkill -f '/.termux-mcp/server.py'
 
 Then start the server again:
-
 mcp-server http
 
-Alternatively, use another port:
-
-MCP_PORT=3001 mcp-server http
-
-Check Whether the Server Is Running
-
-curl http://127.0.0.1:3000/
-
-Python Dependency Error
-
-Reinstall "aiohttp":
-
+Reinstall the Python Dependency
 python -m pip install --upgrade aiohttp
 
-Stop the Server
-
-Press:
-
-CTRL + C
-
-Or stop the process using:
-
-pkill -f '/.termux-mcp/server.py'
-
-Uninstall
-
-Remove the installed server files:
-
+Uninstallation
+Remove the installed server and command:
 rm -rf "$HOME/.termux-mcp"
 rm -f "$PREFIX/bin/mcp-server"
 
-Security
-
-This server can execute commands and access files inside the configured MCP root.
-
-Important security recommendations:
-
-- Keep remote access disabled unless required
-- Do not expose the server directly to the public internet
-- Use trusted networks only
-- Avoid sharing your endpoint publicly
-- Review commands before allowing an AI client to execute them
-- Do not run sensitive commands through untrusted clients
-- Use firewall or VPN restrictions for remote access
-
 Project Structure
-
 Termux-MCP-Server/
 ├── server.py
 ├── install.sh
 ├── README.md
 └── LICENSE
 
+Security
+This server can execute commands and access files within its configured root directory.
+Please follow these recommendations:
+Keep the server bound to 127.0.0.1 when possible
+Enable remote access only when necessary
+Use trusted networks
+Avoid exposing port 3000 publicly
+Do not connect untrusted AI clients
+Review commands before allowing sensitive operations
+Avoid using the server with confidential files
 License
-
 This project is licensed under the MIT License.
-
-You may add a "LICENSE" file containing the MIT License text.
-
 Author
-
-Created by "Alongbar Basumatary" (https://github.com/alongbarbasumatary).
-
+Created and maintained by alongbarbasumatary.
 Repository
-
-"Termux-MCP-Server" (https://github.com/alongbarbasumatary/Termux-MCP-Server)
+View the project on GitHub
+---
+<div align="center">
+If this project is useful to you, consider giving it a ⭐ on GitHub.
+</div>
