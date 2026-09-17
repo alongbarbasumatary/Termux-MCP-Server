@@ -5,6 +5,7 @@ import json
 import os
 import shlex
 import signal
+import shutil
 import subprocess
 import sys
 import uuid
@@ -98,6 +99,103 @@ def run_command(
             "stdout": output_limit(e.stdout or ""),
             "stderr": output_limit(e.stderr or ""),
             "error": f"Command timed out after {timeout} seconds",
+        }
+
+
+def find_root_helper() -> str | None:
+    """Return an available root helper, preferring tsu over su."""
+    for helper in ("tsu", "su"):
+        if shutil.which(helper):
+            return helper
+    return None
+
+
+def root_status() -> dict[str, Any]:
+    """Detect whether a root-capable helper is installed and usable."""
+    helper = find_root_helper()
+    if not helper:
+        return {
+            "available": False,
+            "helper": None,
+            "uid": os.getuid(),
+            "is_root": os.getuid() == 0,
+            "message": "Neither tsu nor su was found in PATH.",
+        }
+
+    try:
+        result = subprocess.run(
+            [helper, "-c", "id"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        return {
+            "available": result.returncode == 0,
+            "helper": helper,
+            "is_root": os.getuid() == 0,
+            "exit_code": result.returncode,
+            "stdout": output_limit(result.stdout),
+            "stderr": output_limit(result.stderr),
+        }
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return {
+            "available": False,
+            "helper": helper,
+            "is_root": os.getuid() == 0,
+            "error": str(e),
+        }
+
+
+def run_root_command(
+    command: str,
+    timeout: int = 60,
+    cwd: str | None = None,
+) -> dict[str, Any]:
+    """Run a command through tsu or su when available."""
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError("command must be a non-empty string")
+
+    helper = find_root_helper()
+    if not helper:
+        return {
+            "error": "No root helper found. Install/configure tsu or su, and grant root access.",
+            "available_helpers": [],
+        }
+
+    if timeout < 1:
+        timeout = 1
+    if not ALLOW_LONG_RUNNING:
+        timeout = min(timeout, 120)
+
+    workdir = MCP_ROOT if cwd is None else resolve_path(cwd)
+    if not workdir.exists() or not workdir.is_dir():
+        raise ValueError(f"Invalid working directory: {workdir}")
+
+    # Use a login shell so Termux commands and environment are available.
+    wrapped = f"cd {shlex.quote(str(workdir))} && {command}"
+    try:
+        result = subprocess.run(
+            [helper, "-c", f"bash -lc {shlex.quote(wrapped)}"],
+            cwd=str(workdir),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=os.environ.copy(),
+        )
+        return {
+            "helper": helper,
+            "exit_code": result.returncode,
+            "stdout": output_limit(result.stdout),
+            "stderr": output_limit(result.stderr),
+            "cwd": str(workdir),
+        }
+    except subprocess.TimeoutExpired as e:
+        return {
+            "helper": helper,
+            "exit_code": -1,
+            "stdout": output_limit(e.stdout or ""),
+            "stderr": output_limit(e.stderr or ""),
+            "error": f"Root command timed out after {timeout} seconds",
         }
 
 
@@ -250,6 +348,52 @@ def get_tools() -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "get_location",
+            "description": (
+                "Get the device's current location using Termux:API "
+                "(termux-location). Requires the Termux:API app and permission."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "enum": ["gps", "network", "passive"],
+                        "default": "gps",
+                    },
+                    "request": {
+                        "type": "string",
+                        "enum": ["once", "last", "updates"],
+                        "default": "once",
+                    },
+                },
+            },
+        },
+        {
+            "name": "root_status",
+            "description": "Detect tsu/su and test whether root execution is available.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+            },
+        },
+        {
+            "name": "root_shell",
+            "description": (
+                "Execute a shell command with root privileges through tsu or su "
+                "if available and authorized on the device."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string"},
+                    "timeout": {"type": "integer", "default": 60},
+                    "cwd": {"type": "string"},
+                },
+                "required": ["command"],
+            },
+        },
+        {
             "name": "list_files",
             "description": "List files and directories inside MCP_ROOT.",
             "inputSchema": {
@@ -309,6 +453,25 @@ def call_tool(name: str, arguments: dict[str, Any]) -> Any:
             arguments.get("api", ""),
             arguments.get("args", []),
             arguments.get("timeout", 60),
+        )
+
+    if name == "get_location":
+        provider = arguments.get("provider", "gps")
+        request = arguments.get("request", "once")
+        return termux_api(
+            "location",
+            ["-p", provider, "-r", request],
+            arguments.get("timeout", 60),
+        )
+
+    if name == "root_status":
+        return root_status()
+
+    if name == "root_shell":
+        return run_root_command(
+            arguments.get("command", ""),
+            arguments.get("timeout", 60),
+            arguments.get("cwd"),
         )
 
     if name == "list_files":
