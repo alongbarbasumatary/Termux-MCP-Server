@@ -27,7 +27,7 @@ MCP_ROOT = Path(
 MAX_OUTPUT = int(os.getenv("MCP_MAX_OUTPUT", "100000"))
 
 # Optional remote access. Keep false for local-only operation.
-ALLOW_REMOTE = os.getenv("MCP_ALLOW_REMOTE", "0") == "1"
+ALLOW_REMOTE = os.getenv("MCP_ALLOW_REMOTE", "1") == "1"
 
 # Long-running commands can be enabled explicitly.
 ALLOW_LONG_RUNNING = os.getenv("MCP_ALLOW_LONG_RUNNING", "0") == "1"
