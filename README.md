@@ -25,7 +25,7 @@ A lightweight, configurable **Model Context Protocol server** for Termux, built 
 
 **Termux MCP Server** connects MCP-compatible AI applications to your Termux environment.
 
-It allows an AI client to interact with your Android device through controlled tools for executing commands, managing files, accessing environment information, and running Termux API commands.
+It allows AI clients to interact with your Android device through tools for executing commands, managing files, accessing environment information, and running Termux API commands.
 
 > Designed for local use, with remote access available when explicitly enabled.
 
@@ -42,15 +42,67 @@ It allows an AI client to interact with your Android device through controlled t
 | 🔒 Local-First | Local access is enabled by default |
 | 🚀 Simple Setup | Install and start with minimal commands |
 
+---
+
 ## Installation
+
+### Automatic Installation
 
 Run the following command inside **Termux**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alongbarbasumatary/Termux-MCP-Server/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alongbarbasumatary/Termux-MCP-Server/main/scripts/install.sh | bash
 ```
 
-The installer automatically installs the required dependencies and creates the `mcp-server` command.
+The installer automatically:
+
+- Installs Python
+- Installs required dependencies
+- Downloads the MCP server
+- Creates the `mcp-server` command
+
+### Manual Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/alongbarbasumatary/Termux-MCP-Server.git
+```
+
+Enter the project directory:
+
+```bash
+cd Termux-MCP-Server
+```
+
+Install the required packages:
+
+```bash
+pkg update -y
+pkg install -y python curl
+```
+
+Install the Python dependency:
+
+```bash
+python -m pip install --upgrade aiohttp
+```
+
+Run the server manually:
+
+```bash
+python server.py http
+```
+
+Or start SSE mode:
+
+```bash
+python server.py sse
+```
+
+> If you want to use the `mcp-server` command, use the automatic installer.
+
+---
 
 ## Quick Start
 
@@ -85,6 +137,8 @@ Press:
 ```text
 CTRL + C
 ```
+
+---
 
 ## Configuration
 
@@ -148,6 +202,8 @@ Long-running commands are disabled by default.
 MCP_ALLOW_LONG_RUNNING=1 mcp-server http
 ```
 
+---
+
 ## Available Tools
 
 The server exposes the following MCP tools:
@@ -161,6 +217,8 @@ The server exposes the following MCP tools:
 | `write_file` | Write content to files |
 | `environment` | Retrieve environment information |
 
+---
+
 ## Termux API Support
 
 To use Termux API functionality, install the Termux API package:
@@ -171,11 +229,13 @@ pkg install termux-api
 
 You also need the **Termux:API Android add-on** installed on your device.
 
-For example:
+Example:
 
 ```bash
 termux-battery-status
 ```
+
+---
 
 ## Requirements
 
@@ -185,7 +245,7 @@ termux-battery-status
 - Internet connection during installation
 - Termux:API add-on for API-related features
 
-For the best compatibility, use a current Termux version from a trusted source such as F-Droid.
+---
 
 ## Troubleshooting
 
@@ -205,7 +265,7 @@ Check the port:
 ss -ltnp | grep ':3000'
 ```
 
-Or start the server on another port:
+Or use another port:
 
 ```bash
 MCP_PORT=3001 mcp-server http
@@ -235,6 +295,8 @@ mcp-server http
 python -m pip install --upgrade aiohttp
 ```
 
+---
+
 ## Uninstallation
 
 Remove the installed server and command:
@@ -244,21 +306,26 @@ rm -rf "$HOME/.termux-mcp"
 rm -f "$PREFIX/bin/mcp-server"
 ```
 
+---
+
 ## Project Structure
 
 ```text
 Termux-MCP-Server/
 ├── server.py
-├── install.sh
+├── scripts/
+│   └── install.sh
 ├── README.md
 └── LICENSE
 ```
+
+---
 
 ## Security
 
 This server can execute commands and access files within its configured root directory.
 
-Please follow these recommendations:
+Recommendations:
 
 - Keep the server bound to `127.0.0.1` when possible
 - Enable remote access only when necessary
@@ -267,6 +334,8 @@ Please follow these recommendations:
 - Do not connect untrusted AI clients
 - Review commands before allowing sensitive operations
 - Avoid using the server with confidential files
+
+---
 
 ## License
 
